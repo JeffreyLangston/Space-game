@@ -2,11 +2,12 @@
 
 ## Project Summary
 
-**Title:** Pocket Swarm
-**Engine:** Godot 4.x (GDScript only — no C#)
+**Title:** Pocket Swarm *(working title — not final)*
+**Engine:** Godot 4.6 (GDScript only — no C#)
 **Orientation:** Landscape 16:9, safe-area aware
 **Platforms:** iOS + Android
-**Genre:** Survivors-lite (auto-attack, swarm survival, upgrade loop)
+**Monetization:** Free with ads
+**Genre:** Survivors-lite (auto-attack, swarm survival, upgrade loop, meta-progression)
 
 ## Non-Negotiable Acceptance Tests
 
@@ -26,7 +27,7 @@ Every build must pass all six before it ships:
 Run through this after every significant change:
 
 - [ ] Fresh install on device — launches without crash
-- [ ] Play a full 90-second run to boss spawn
+- [ ] Play a full 99-second run to boss spawn
 - [ ] Die to enemies — Game Over screen appears, restart works
 - [ ] Beat the boss — Win screen appears, restart works
 - [ ] Level up at least 3 times — each offers 3 unique choices
@@ -49,3 +50,5 @@ Run through this after every significant change:
 - No orphaned nodes or leaked references
 - All scenes load without missing dependencies
 - Export to both platforms completes without errors
+- Ad SDK initializes without crash on both platforms
+- Sprite assets load correctly (no missing texture errors)

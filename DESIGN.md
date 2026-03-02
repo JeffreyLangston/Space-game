@@ -2,15 +2,17 @@
 
 ## Concept
 
-A survivors-lite mobile game. One thumb, 90 seconds per run, landscape.
+A survivors-lite mobile game. One thumb, 99 seconds per run, landscape.
 Kill enemies, collect XP, pick upgrades, survive, beat the boss.
+Between runs: spend currency to unlock weapons, armor, and ships.
 
 ## Core Loop
 
 ```
-Move (drag anywhere) → Auto-attack nearest enemy → Enemies drop XP gems
+Move (drag anywhere) → Auto-attack nearest enemy → Enemies drop XP gems + coins
      → Collect gems → Level up → Pick 1 of 3 upgrades → Loop
-     → Boss spawns at 90s → Beat boss = win the run
+     → Boss spawns at 99s → Beat boss = win the run
+     → Earn coins → Spend in meta shop → Unlock gear → Start new run stronger
 ```
 
 ## Controls
@@ -31,7 +33,8 @@ Move (drag anywhere) → Auto-attack nearest enemy → Enemies drop XP gems
 | Pickup radius | 50 px | Upgradeable |
 | HP regen | 0/s | Upgradeable |
 
-The player is represented as a simple colored circle/sprite. Visual can be upgraded later — ship with primitives first.
+The player is represented as a sprite. Art will be provided for v1.
+The active ship determines the player's base sprite and may modify base stats.
 
 ## Enemies
 
@@ -52,11 +55,11 @@ The player is represented as a simple colored circle/sprite. Visual can be upgra
 | 30–45s | 3 | 2.0 | 25 |
 | 45–60s | 4 | 3.0 | 30 |
 | 60–75s | 5 | 4.0 | 35 |
-| 75–90s | 6 | 5.0 | 40 |
+| 75–99s | 6 | 5.0 | 40 |
 
 ### Boss
 
-- Spawns at 90 seconds. All regular spawning stops.
+- Spawns at 99 seconds. All regular spawning stops.
 - HP: 500
 - Speed: 40 px/s (slow but tanky)
 - Damage on contact: 20/s
@@ -96,21 +99,49 @@ Rules:
 - If fewer than 3 remain, offer what's left.
 - Selection is random, no weighting for now.
 
-## Weapon (Auto-Attack)
+## Weapons (Auto-Attack)
 
+### Default Weapon: Blaster
 - Projectile fires toward nearest enemy within range.
 - Projectile speed: 400 px/s.
-- Projectile is a simple shape (small circle or line).
 - Projectile despawns on hit or after 2 seconds.
 - One projectile at a time per fire interval (no burst).
+
+### Discoverable Weapons (unlocked via meta-progression)
+
+Weapons are unlocked permanently with coins and selected before a run starts.
+Only one weapon is active per run. Each weapon has its own upgrade path.
+
+| Weapon | Behavior | Unlock Cost | Notes |
+|--------|----------|-------------|-------|
+| Blaster | Single shot, nearest enemy | Free (default) | Balanced starter |
+| Spread Shot | 3 projectiles in a cone | TBD | Lower per-shot damage, better crowd control |
+| Orbitals | Rotating projectiles circle the player | TBD | No aiming, constant area damage |
+| Piercer | Shot passes through enemies | TBD | High damage, slow fire rate |
+
+*Exact weapon list and costs are TBD — start with Blaster only for MVP, add others post-M2.*
+
+### Weapon Upgrade Paths (in-run)
+
+When a weapon-specific upgrade appears in the level-up pool, it enhances the current weapon:
+
+| Weapon | Possible In-Run Upgrades |
+|--------|--------------------------|
+| Blaster | +damage, +fire rate, +projectile speed |
+| Spread Shot | +projectile count, +cone width, +damage |
+| Orbitals | +orbit count, +orbit speed, +orbit radius |
+| Piercer | +pierce count, +damage, +fire rate |
+
+These are added to the general upgrade pool (move speed, HP, etc.) during level-up.
 
 ## Screens & UI
 
 ### HUD (during Run)
 - **HP bar** — top-left, horizontal bar.
 - **XP bar** — top-center, shows progress to next level.
-- **Timer** — top-right, counts up to 90s.
+- **Timer** — top-right, counts up to 99s.
 - **Level indicator** — next to XP bar, shows current level number.
+- **Coin counter** — near HP bar, shows coins earned this run.
 
 ### Level-Up Overlay
 - Pauses gameplay.
@@ -127,10 +158,17 @@ Rules:
 - "Time: X seconds"
 - "Restart" button.
 
-### Title Screen (optional for v1)
-- "Pocket Swarm" title.
-- "Play" button.
-- Can be skipped in v1 — go straight to Run.
+### Title / Menu Screen
+- Game title.
+- "Play" button → starts run with currently equipped loadout.
+- "Armory" button → opens equipment/shop screen.
+
+### Armory Screen (meta-progression hub)
+- **Weapons tab:** List of all weapons (locked/unlocked). Tap to equip or buy.
+- **Armor tab:** List of all armor sets. Each gives a passive bonus.
+- **Ships tab:** List of all ships. Each changes player sprite and may adjust base stats.
+- Coin balance shown prominently.
+- "Back" returns to title screen.
 
 ## Debug Overlay
 
@@ -139,29 +177,95 @@ Rules:
 - Semi-transparent, bottom-right corner.
 - Only in debug/dev builds (can strip for release).
 
+## Meta-Progression (Between Runs)
+
+### Currency: Coins
+
+- Enemies have a chance to drop coins (separate from XP gems).
+- Coins are kept even if you die — they persist across runs.
+- Spent in the Armory to unlock weapons, armor, and ships.
+
+### Armor
+
+Armor provides passive bonuses. One armor set equipped at a time.
+
+| Armor | Bonus | Unlock Cost |
+|-------|-------|-------------|
+| None | — | Free (default) |
+| Light Plating | +15 max HP | TBD |
+| Heavy Plating | +30 max HP, −10% move speed | TBD |
+| Regen Suit | +1 HP/s base regen | TBD |
+| Magnet Vest | +30 pickup radius | TBD |
+
+*Exact list and costs TBD — start with no armor for MVP.*
+
+### Ships
+
+Ships change the player's sprite and may modify base stats.
+
+| Ship | Stat Modifier | Unlock Cost |
+|------|---------------|-------------|
+| Default | None | Free |
+| Scout | +20% move speed, −10% max HP | TBD |
+| Tank | +30% max HP, −15% move speed | TBD |
+| Collector | +50% pickup radius | TBD |
+
+*Exact list and costs TBD — start with default ship for MVP.*
+
+### Discovery
+
+- Some items are visible but locked ("???") until a discovery condition is met.
+- Discovery conditions: reach a certain level, survive X seconds, kill X enemies in one run, beat the boss, etc.
+- Once discovered, the item becomes visible and purchasable with coins.
+
 ## Save Data
 
-Minimal — stored via Godot's `ConfigFile` or `FileAccess`:
+Stored via Godot's `ConfigFile` or `FileAccess`:
 
 - `best_time` — longest survival time in seconds.
 - `best_level` — highest level reached.
 - `runs_played` — total run count.
+- `coins` — total coin balance.
+- `unlocked_weapons` — list of unlocked weapon IDs.
+- `unlocked_armor` — list of unlocked armor IDs.
+- `unlocked_ships` — list of unlocked ship IDs.
+- `equipped_weapon` — currently selected weapon ID.
+- `equipped_armor` — currently selected armor ID.
+- `equipped_ship` — currently selected ship ID.
+- `discoveries` — list of discovered item IDs.
 
 No cloud save. No accounts. Local only.
 
 ## Visual Style
 
-Ship with **primitives** (colored shapes):
-- Player: blue circle
-- Enemies: red circles (boss is larger, darker red)
-- Projectiles: white small circles
-- XP gems: green small diamonds
-- Background: dark gray
+Sprite art will be provided for v1. All game objects use `Sprite2D` nodes.
 
-This is intentionally minimal. Art can be layered on later without changing any game logic.
+- Player: sprite determined by equipped ship.
+- Enemies: unique sprites per enemy type (regular, boss).
+- Projectiles: sprite per weapon type.
+- XP gems: small gem sprite.
+- Coins: small coin sprite.
+- Background: TBD (tiling space/arena texture or flat color).
 
-## Audio (optional for v1)
+Art pipeline: sprites provided by the developer, loaded as `.png` in `assets/sprites/`.
 
-Not required for initial build. Can add later:
-- Simple SFX: shoot, hit, pickup, level-up chime, death.
-- Background loop: optional.
+## Audio
+
+Audio assets will be provided by the developer. The game should support:
+
+- **SFX:** shoot, enemy hit, enemy death, pickup (gem), pickup (coin), level-up chime, player hit, player death, boss spawn, boss defeated, UI button tap.
+- **Music:** background loop during run (can be a single track for MVP).
+- Audio files placed in `assets/audio/sfx/` and `assets/audio/music/`.
+- Volume should respect device silent mode / ringer switch.
+- Optional: mute toggle in title screen (save preference).
+
+## Ads
+
+**Model:** Free with ads.
+
+- **Interstitial ad:** Shown on Game Over / Win screen before the restart button is available. Skippable after a delay.
+- **Optional rewarded ad:** "Watch ad for 2× coins" on the results screen. Player can skip.
+- **No banner ads during gameplay** — they would obstruct the play area.
+- Ad SDK: TBD (AdMob is the standard choice for Godot mobile).
+- Ad integration is a post-MVP task — get the game working first, add ads last.
+- Privacy policy must disclose ad data collection (see PUBLISHING.md).

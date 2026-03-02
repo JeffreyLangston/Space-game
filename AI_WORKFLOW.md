@@ -10,11 +10,11 @@ Don't ask the AI to "make a game." Give it a **contract + acceptance tests**, th
 
 Give the AI this prompt (adapt as needed):
 
-> Create a Godot 4.x project named PocketSwarm.
+> Create a Godot 4.6 project named PocketSwarm.
 > - Use GDScript only.
 > - Landscape 16:9; safe-area aware.
-> - Scenes: Main.tscn (boot/scene switch), Run.tscn (gameplay), LevelUp.tscn (overlay), GameOver.tscn.
-> - Systems: Spawner (wave ramp), Enemy (steer to player), Weapon (auto-target nearest), XP (gems + leveling), Upgrades (pool + weighted choices), Save (best time, best level).
+> - Scenes: Main.tscn (boot/scene switch), TitleScreen.tscn (menu), Run.tscn (gameplay), LevelUp.tscn (overlay), GameOver.tscn, Armory.tscn (equipment shop).
+> - Systems: Spawner (wave ramp, boss at 99s), Enemy (steer to player), Weapon (auto-target nearest, multiple weapon types), XP (gems + leveling), Coins (meta currency), Upgrades (pool + weapon-specific paths), Loadout (weapon/armor/ship selection), Save (stats, coins, unlocks, loadout), Ads (interstitial + rewarded via AdMob).
 > - Include a debug overlay toggled by triple-tap showing FPS, enemy count.
 > - Provide all scripts and .tscn files with full contents.
 > - Provide a minimal CI-style script/checklist for manual verification.
@@ -71,9 +71,10 @@ Return: file path → change summary → exact code edits.
 Once all acceptance tests pass:
 
 1. **Performance pass:** Run with debug overlay, verify 60 FPS at 200 enemies.
-2. **Visual pass:** Replace primitives with simple sprites if desired.
-3. **Export pass:** Set up Android and iOS export presets (see PUBLISHING.md).
-4. **Test on device:** Internal testing (Play) / TestFlight (iOS).
+2. **Art pass:** Integrate provided sprite art and audio assets.
+3. **Ad pass:** Integrate AdMob SDK, test interstitial + rewarded flows.
+4. **Export pass:** Set up Android and iOS export presets (see PUBLISHING.md).
+5. **Test on device:** Internal testing (Play) / TestFlight (iOS).
 
 ---
 
@@ -117,23 +118,45 @@ Once all acceptance tests pass:
 ### M2: Game Loop Complete
 - [ ] Level-up triggers with 3 upgrade choices
 - [ ] Upgrades apply correctly to player stats
-- [ ] Boss spawns at 90s
+- [ ] Boss spawns at 99s
 - [ ] Game over on player death
 - [ ] Win on boss kill
 - [ ] Restart works from both end states
+- [ ] Coins drop and are collected
+- [ ] Coins persist after run ends
 
-### M3: Polish & Tests
+### M3: Meta-Progression
+- [ ] Title screen with Play + Armory buttons
+- [ ] Armory screen shows weapons/armor/ships
+- [ ] Locked/unlocked/equipped states display correctly
+- [ ] Purchasing with coins works
+- [ ] Equipped loadout applies to run (weapon type, armor bonus, ship sprite)
+- [ ] Save system persists all unlocks and loadout
+- [ ] Discovery system hides undiscovered items as "???"
+
+### M4: Art & Audio
+- [ ] All sprite art integrated (player ships, enemies, projectiles, pickups, UI)
+- [ ] All audio integrated (SFX + music)
+- [ ] No missing texture or audio errors
+
+### M5: Polish & Tests
 - [ ] All 6 acceptance tests pass
 - [ ] Debug overlay works (triple-tap)
-- [ ] Save system persists best time/level
-- [ ] HUD shows all required info
+- [ ] Save system persists stats, coins, unlocks, loadout
+- [ ] HUD shows all required info (HP, XP, timer, coins, level)
 - [ ] No GDScript errors or warnings
 
-### M4: Export & Publish
+### M6: Ads & Export
+- [ ] AdMob SDK integrated
+- [ ] Interstitial ad shows on game over / win
+- [ ] Rewarded ad for 2× coins works
 - [ ] Android AAB exports cleanly
 - [ ] iOS Xcode project exports cleanly
 - [ ] Tested on real Android device
 - [ ] Tested on real iOS device
+
+### M7: Publish
+- [ ] Privacy policy live (discloses ad data)
 - [ ] Store listings prepared
 - [ ] Submitted to both stores
 

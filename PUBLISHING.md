@@ -32,15 +32,17 @@ Two stores, two pipelines, two sets of blockers. This doc covers what's needed b
    - Configure path + passwords in Godot export settings.
    - **Never commit the keystore to the repo.**
 
-### Play Console Setup (Manual — requires human)
+### Play Console Setup
 
-- [ ] Create Google Play Developer account ($25 one-time fee)
+Developer account: **already exists.**
+
 - [ ] Create app listing in Play Console
 - [ ] Fill in: title, description, category (Casual/Action), content rating questionnaire
 - [ ] Upload screenshots (landscape): phone + tablet (min 2 each)
 - [ ] Set pricing: Free
-- [ ] Privacy policy URL (required even for no-data-collected apps)
-- [ ] Data safety form (declare: no data collected, no data shared)
+- [ ] Set up AdMob app ID and link to Play Console
+- [ ] Privacy policy URL (required — must disclose ad SDK data collection)
+- [ ] Data safety form (declare: ad SDK collects device identifiers, ad interaction data; no user-provided data collected)
 - [ ] Upload AAB to internal testing track first
 - [ ] Test on 3+ devices via internal testing
 - [ ] Promote to production
@@ -81,22 +83,24 @@ Two stores, two pipelines, two sets of blockers. This doc covers what's needed b
    - Set capabilities (none needed for this game)
    - Archive → Upload to App Store Connect
 
-### App Store Connect Setup (Manual — requires human)
+### App Store Connect Setup
 
-- [ ] Apple Developer Program membership ($99/year)
+Developer account: **already exists.** Mac available for Xcode builds.
+
 - [ ] Create app record in App Store Connect
 - [ ] Fill in: name, subtitle, description, keywords, category (Games > Action)
 - [ ] Upload screenshots (landscape): iPhone 6.7", iPhone 6.5", iPad Pro 12.9"
 - [ ] App icon: 1024×1024 PNG (no alpha, no rounded corners — Apple rounds them)
-- [ ] Privacy policy URL
+- [ ] Privacy policy URL (must disclose ad SDK data collection)
 - [ ] App Review information (demo notes if needed)
 - [ ] Age rating questionnaire
+- [ ] App Tracking Transparency: required if AdMob uses IDFA — add ATT prompt
 - [ ] Upload build via Xcode/Transporter
 - [ ] Submit for review
 
 ### iOS Gotchas
 
-- **"Thin app" rejections:** Apple rejects apps that feel too simple or demo-like. Pocket Swarm needs to feel complete: working gameplay loop, polish, no placeholder text.
+- **"Thin app" rejections:** Apple rejects apps that feel too simple or demo-like. The game needs to feel complete: working gameplay loop, sprite art, audio, meta-progression, no placeholder text.
 - **Safe area:** iPhones with notch/Dynamic Island — HUD must respect safe area insets.
 - **No hot-code loading:** All code must be bundled at build time (GDScript is fine).
 - **Provisioning profiles:** Expire; set a reminder to renew.
@@ -114,7 +118,7 @@ Two stores, two pipelines, two sets of blockers. This doc covers what's needed b
 | App icon | 1024×1024 PNG | Used by both stores; iOS requires no alpha |
 | Feature graphic | 1024×500 PNG | Android Play Store listing header |
 | Screenshots | Landscape, per-device sizes | At least 2 per required device class |
-| Privacy policy | Hosted URL | Can be a simple GitHub Pages or Notion page |
+| Privacy policy | Hosted URL | Must disclose ad SDK data collection (device ID, ad interaction). Can be GitHub Pages or Notion |
 | Short description | 80 chars max | Play Store |
 | Full description | 4000 chars max | Both stores |
 
@@ -133,11 +137,14 @@ Two stores, two pipelines, two sets of blockers. This doc covers what's needed b
 | Generate export presets | Yes | — |
 | Generate app icon / splash | Yes | — |
 | Write store descriptions | Yes | — |
-| Write privacy policy | Yes | — |
-| Create developer accounts | — | Yes |
+| Write privacy policy (with ad disclosure) | Yes | — |
+| Integrate ad SDK code | Yes | — |
+| Create developer accounts | — | Already done |
 | Generate signing certs/keystores | — | Yes |
+| Provide sprite art | — | Yes |
+| Provide audio assets | — | Yes |
 | Upload builds | — | Yes |
-| Fill compliance forms | — | Yes (account-gated) |
+| Fill compliance forms (data safety, ATT) | — | Yes (account-gated) |
 | Take device screenshots | — | Yes (or automated via device farm) |
 | Respond to review rejections | — | Yes |
 
@@ -151,6 +158,9 @@ Two stores, two pipelines, two sets of blockers. This doc covers what's needed b
 - [ ] App icon is set in project.godot
 - [ ] Version number is correct
 - [ ] No console errors or warnings
+- [ ] Ad SDK integrated and tested (interstitial + rewarded)
+- [ ] All sprite art and audio assets are final
+- [ ] Privacy policy URL is live and discloses ad data collection
 
 ### Android
 - [ ] AAB builds without errors

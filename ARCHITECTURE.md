@@ -2,7 +2,7 @@
 
 ## Engine & Language
 
-- **Godot 4.x** (latest stable)
+- **Godot 4.6**
 - **GDScript only** — no C#, no GDExtension
 - Reason: C# iOS export is experimental; GDScript is the safest path for dual-platform mobile.
 
@@ -16,33 +16,54 @@ PocketSwarm/
 │
 ├── scenes/
 │   ├── Main.tscn              # Boot scene, handles scene switching
+│   ├── TitleScreen.tscn       # Title / menu screen
 │   ├── Run.tscn               # Core gameplay scene
 │   ├── LevelUp.tscn           # Upgrade selection overlay (CanvasLayer)
-│   └── GameOver.tscn          # Game over / win screen
+│   ├── GameOver.tscn          # Game over / win screen
+│   └── Armory.tscn            # Equipment shop (weapons, armor, ships)
 │
 ├── scripts/
 │   ├── main.gd                # Scene manager, global state reset
+│   ├── title_screen.gd        # Title menu logic
 │   ├── player.gd              # Movement, HP, stats, collision
-│   ├── weapon.gd              # Auto-targeting, projectile spawning
+│   ├── weapon.gd              # Auto-targeting, projectile spawning (base)
+│   ├── weapon_data.gd         # Weapon definitions (Resource)
 │   ├── projectile.gd          # Movement, hit detection, despawn
 │   ├── enemy.gd               # Steering toward player, damage
 │   ├── boss.gd                # Boss variant (extends enemy logic)
 │   ├── spawner.gd             # Wave management, spawn timing
 │   ├── xp_gem.gd              # Gem behavior, magnetic pickup
+│   ├── coin.gd                # Coin drop behavior
 │   ├── xp_manager.gd          # XP tracking, level-up trigger
 │   ├── upgrade_manager.gd     # Upgrade pool, random selection, application
-│   ├── hud.gd                 # HP bar, XP bar, timer, level display
+│   ├── loadout_manager.gd     # Equipped weapon/armor/ship for current run
+│   ├── armory_ui.gd           # Equipment shop UI logic
+│   ├── hud.gd                 # HP bar, XP bar, timer, coin counter
 │   ├── level_up_ui.gd         # 3-card selection UI
-│   ├── game_over_ui.gd        # End screen logic
+│   ├── game_over_ui.gd        # End screen logic (+ ad triggers)
 │   ├── save_manager.gd        # Local save/load (ConfigFile)
 │   ├── debug_overlay.gd       # FPS, enemy count, triple-tap toggle
-│   └── virtual_joystick.gd    # Touch-anywhere joystick input
+│   ├── virtual_joystick.gd    # Touch-anywhere joystick input
+│   └── ad_manager.gd          # Ad SDK wrapper (interstitial + rewarded)
 │
-├── resources/
-│   └── (placeholder textures, if any)
+├── data/
+│   ├── weapons.tres           # Weapon definitions (Resource array)
+│   ├── armor.tres             # Armor definitions
+│   └── ships.tres             # Ship definitions
+│
+├── assets/
+│   ├── sprites/
+│   │   ├── player/            # Ship sprites
+│   │   ├── enemies/           # Enemy + boss sprites
+│   │   ├── projectiles/       # Per-weapon projectile sprites
+│   │   ├── pickups/           # XP gem, coin sprites
+│   │   └── ui/                # HUD elements, buttons, cards
+│   └── audio/
+│       ├── sfx/               # Sound effects
+│       └── music/             # Background music loops
 │
 └── addons/
-    └── (none initially)
+    └── (ad SDK plugin, if needed)
 ```
 
 ## Scene Tree Design
@@ -50,7 +71,26 @@ PocketSwarm/
 ### Main.tscn
 ```
 Main (Node)
-└── (loads Run.tscn or GameOver.tscn as child)
+└── (loads TitleScreen / Run / GameOver / Armory as child)
+```
+
+### TitleScreen.tscn
+```
+TitleScreen (Control)
+├── TitleLabel
+├── PlayButton
+└── ArmoryButton
+```
+
+### Armory.tscn
+```
+Armory (Control)
+├── CoinBalanceLabel
+├── TabContainer
+│   ├── WeaponsTab (VBoxContainer)
+│   ├── ArmorTab (VBoxContainer)
+│   └── ShipsTab (VBoxContainer)
+└── BackButton
 ```
 
 ### Run.tscn
@@ -58,7 +98,7 @@ Main (Node)
 Run (Node2D)
 ├── Player (CharacterBody2D)
 │   ├── CollisionShape2D
-│   ├── Sprite2D (or ColorRect placeholder)
+│   ├── Sprite2D
 │   └── Weapon (Node2D)
 │       └── FireTimer (Timer)
 ├── Spawner (Node)
@@ -66,13 +106,16 @@ Run (Node2D)
 ├── Enemies (Node2D)              # Parent for all enemy instances
 ├── Projectiles (Node2D)          # Parent for all projectile instances
 ├── XPGems (Node2D)               # Parent for all gem instances
+├── Coins (Node2D)                # Parent for all coin instances
 ├── XPManager (Node)
 ├── UpgradeManager (Node)
+├── LoadoutManager (Node)         # Applies equipped gear at run start
 ├── HUD (CanvasLayer)
 │   ├── HPBar (ProgressBar)
 │   ├── XPBar (ProgressBar)
 │   ├── LevelLabel (Label)
-│   └── TimerLabel (Label)
+│   ├── TimerLabel (Label)
+│   └── CoinLabel (Label)
 ├── LevelUpUI (CanvasLayer)       # Hidden until level-up
 │   ├── Panel
 │   └── UpgradeCards (HBoxContainer)
@@ -89,8 +132,9 @@ Run (Node2D)
 GameOver (CanvasLayer)
 ├── Panel
 │   ├── TitleLabel ("Game Over" or "Boss Defeated!")
-│   ├── StatsLabel (time survived, level reached)
+│   ├── StatsLabel (time survived, level reached, coins earned)
 │   ├── BestLabel (best time)
+│   ├── RewardedAdButton ("Watch ad for 2× coins")
 │   └── RestartButton
 ```
 
@@ -105,9 +149,21 @@ GameOver (CanvasLayer)
 
 ### Weapon (`weapon.gd`)
 - Attached to Player.
-- Each fire interval: find nearest enemy in range → spawn projectile toward it.
-- Tracks: damage, fire rate (attacks/sec).
+- Behavior varies by equipped weapon type (loaded from `weapon_data.gd`).
+- Default (Blaster): find nearest enemy in range → spawn projectile toward it.
+- Tracks: damage, fire rate (attacks/sec), weapon-specific params.
 - No input needed — fully automatic.
+- Weapon type is set at run start by LoadoutManager and cannot change mid-run.
+
+### Weapon Data (`weapon_data.gd`)
+- Resource class defining weapon properties: name, base damage, fire rate, projectile scene, behavior type.
+- Each weapon type has its own projectile behavior (straight, cone, orbit, pierce).
+
+### Loadout Manager (`loadout_manager.gd`)
+- Reads equipped weapon/armor/ship from SaveManager at run start.
+- Applies stat modifiers from armor and ship to Player.
+- Configures Weapon node with the correct weapon data.
+- Runs once at the start of each run, then is inert.
 
 ### Projectile (`projectile.gd`)
 - Moves in a straight line at constant speed.
@@ -128,7 +184,7 @@ GameOver (CanvasLayer)
 - Manages wave progression (wave number, enemies/sec).
 - Every 15 seconds: increment wave, increase spawn rate.
 - Spawns enemies at random points just outside the visible screen.
-- At 90 seconds: stop spawning regulars, spawn the boss.
+- At 99 seconds: stop spawning regulars, spawn the boss.
 
 ### XP Gem (`xp_gem.gd`)
 - Sits on the ground after enemy death.
@@ -151,8 +207,27 @@ GameOver (CanvasLayer)
 ### Save Manager (`save_manager.gd`)
 - Autoload singleton.
 - Uses `ConfigFile` for persistence.
-- Saves: best_time, best_level, runs_played.
-- Loads on startup, saves on run end.
+- Saves: best_time, best_level, runs_played, coins, unlocked items, equipped loadout, discoveries.
+- Loads on startup, saves on run end and on purchase.
+
+### Coin (`coin.gd`)
+- Dropped by enemies (lower chance than XP gems).
+- Same magnetic pickup behavior as XP gems (uses player's pickup radius).
+- On overlap with player: add to run's coin count, `queue_free()`.
+- Coins are banked to SaveManager on run end (even on death).
+
+### Ad Manager (`ad_manager.gd`)
+- Autoload singleton.
+- Wraps the ad SDK (AdMob or similar).
+- Methods: `show_interstitial()`, `show_rewarded(callback)`, `is_rewarded_ready()`.
+- Called by GameOver screen.
+- Gracefully no-ops if ads aren't loaded or SDK isn't available (dev builds).
+
+### Armory UI (`armory_ui.gd`)
+- Displays weapons/armor/ships in tabs.
+- Shows locked (???), unlocked-but-not-purchased, and owned states.
+- Purchase flow: tap item → confirm → deduct coins → unlock → equip.
+- Reads/writes through SaveManager.
 
 ### Virtual Joystick (`virtual_joystick.gd`)
 - Listens to `InputEventScreenTouch` and `InputEventScreenDrag`.
@@ -202,7 +277,8 @@ Target: 200 enemies at 60 FPS on a mid-range phone.
 
 | Name | Script | Purpose |
 |------|--------|---------|
-| SaveManager | `save_manager.gd` | Persistent data |
+| SaveManager | `save_manager.gd` | Persistent data (stats, coins, unlocks, loadout) |
+| AdManager | `ad_manager.gd` | Ad SDK wrapper |
 
 Keep autoloads minimal. Most systems live in the Run scene.
 
@@ -213,11 +289,14 @@ No custom input actions needed. All input is touch-based, handled directly via `
 ## Signals Flow
 
 ```
-Player.died           → Run: trigger game over
-Enemy.died            → Spawner: decrement count; XP: spawn gem
-Boss.boss_defeated    → Run: trigger win screen
+Player.died           → Run: trigger game over, bank coins
+Enemy.died            → Spawner: decrement count; spawn gem + maybe coin
+Boss.boss_defeated    → Run: trigger win screen, bank coins
 XPManager.level_up    → Run: pause, show LevelUpUI
 LevelUpUI.selected    → UpgradeManager: apply upgrade, unpause
-RestartButton.pressed → Main: reload Run scene
+RestartButton.pressed → Main: show TitleScreen (or reload Run)
+PlayButton.pressed    → Main: load Run with current loadout
+ArmoryButton.pressed  → Main: load Armory
 VirtualJoystick       → Player reads direction each frame (polling, not signal)
+AdManager.rewarded_complete → GameOver: double coins
 ```
