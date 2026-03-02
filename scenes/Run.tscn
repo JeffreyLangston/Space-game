@@ -1,0 +1,130 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/run.gd" id="1_run"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="3_weapon"]
+[ext_resource type="Script" path="res://scripts/spawner.gd" id="4_spawner"]
+[ext_resource type="Script" path="res://scripts/xp_manager.gd" id="5_xp"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="6_hud"]
+[ext_resource type="Script" path="res://scripts/debug_overlay.gd" id="7_debug"]
+[ext_resource type="Script" path="res://scripts/virtual_joystick.gd" id="8_joy"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 16.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pickup"]
+radius = 80.0
+
+[node name="Run" type="Node2D"]
+script = ExtResource("1_run")
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(960, 540)
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("CircleShape2D_player")
+
+[node name="PickupArea" type="Area2D" parent="Player"]
+collision_layer = 16
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/PickupArea"]
+shape = SubResource("CircleShape2D_pickup")
+
+[node name="Weapon" type="Node2D" parent="Player"]
+script = ExtResource("3_weapon")
+
+[node name="FireTimer" type="Timer" parent="Player/Weapon"]
+wait_time = 0.5
+autostart = true
+
+[node name="Spawner" type="Node" parent="."]
+script = ExtResource("4_spawner")
+
+[node name="SpawnTimer" type="Timer" parent="Spawner"]
+wait_time = 0.1
+autostart = true
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="Projectiles" type="Node2D" parent="."]
+
+[node name="XPGems" type="Node2D" parent="."]
+
+[node name="XPManager" type="Node" parent="."]
+script = ExtResource("5_xp")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("6_hud")
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 20
+
+[node name="TopBar" type="HBoxContainer" parent="HUD/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="HPBar" type="ProgressBar" parent="HUD/MarginContainer/TopBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 24)
+value = 100.0
+show_percentage = false
+
+[node name="XPBar" type="ProgressBar" parent="HUD/MarginContainer/TopBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 24)
+size_flags_horizontal = 3
+value = 0.0
+show_percentage = false
+
+[node name="LevelLabel" type="Label" parent="HUD/MarginContainer/TopBar"]
+layout_mode = 2
+text = "Lv 1"
+
+[node name="CoinLabel" type="Label" parent="HUD/MarginContainer/TopBar"]
+layout_mode = 2
+text = "0"
+
+[node name="TimerLabel" type="Label" parent="HUD/MarginContainer/TopBar"]
+layout_mode = 2
+text = "0:00"
+
+[node name="DebugOverlay" type="CanvasLayer" parent="."]
+layer = 10
+script = ExtResource("7_debug")
+
+[node name="DebugLabel" type="Label" parent="DebugOverlay"]
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 300.0
+offset_bottom = 200.0
+text = "FPS: --"
+
+[node name="VirtualJoystick" type="CanvasLayer" parent="."]
+layer = 5
+script = ExtResource("8_joy")
+
+[node name="Base" type="ColorRect" parent="VirtualJoystick"]
+visible = false
+offset_left = -40.0
+offset_top = -40.0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(1, 1, 1, 0.15)
+
+[node name="Knob" type="ColorRect" parent="VirtualJoystick"]
+visible = false
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(1, 1, 1, 0.4)
